@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Produtos</title>
+    <style>
+        /* --- Estilos Gerais --- */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --font-color: #333;
+            --border-color: #ddd;
+            --white-color: #fff;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #e9ebee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--font-color);
+        }
+
+        /* --- Estrutura do App (Simulando um Celular) --- */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh;
+            max-height: 800px;
+            background-color: var(--secondary-color);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid #333;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        main {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        footer {
+            display: flex;
+            background-color: var(--white-color);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            color: #888;
+            transition: background-color 0.2s, color 0.2s;
+            border: none;
+            background: none;
+            font-size: 1em;
+        }
+
+        .nav-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .nav-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* --- Página de Consulta --- */
+        .search-container {
+            padding: 10px;
+            background-color: var(--white-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .product-list-container {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: var(--white-color);
+            border-bottom: 1px solid #eee;
+        }
+        
+        .product-item:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .product-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .product-info {
+            flex-grow: 1;
+        }
+
+        .product-id {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .product-name {
+            font-size: 1em;
+        }
+
+        #empty-message {
+            text-align: center;
+            margin-top: 50px;
+            color: #888;
+        }
+
+        /* --- Página da Câmera --- */
+        #page-camera {
+            padding: 20px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #camera-view {
+            width: 100%;
+            max-width: 300px;
+            background-color: #000;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            display: none; /* Inicia escondida */
+        }
+        
+        #permission-message, #camera-placeholder {
+            padding: 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        #camera-controls button {
+            padding: 12px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            transition: background-color 0.2s;
+        }
+
+        #camera-controls button:hover {
+            background-color: #3a7ac2;
+        }
+        
+        #camera-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #camera-search-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            letter-spacing: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        #camera-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        #camera-result.not-found {
+            background-color: #ffebee;
+            color: var(--danger-color);
+        }
+
+        #camera-result.found {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header id="app-header">Consulta de Produtos</header>
+        
+        <main>
+            <!-- PÁGINA DE CONSULTA -->
+            <div id="page-consulta" class="page active">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Buscar por nome ou código...">
+                </div>
+                <div class="product-list-container" id="product-list">
+                    <!-- Itens da lista serão inseridos aqui via JS -->
+                </div>
+            </div>
+
+            <!-- PÁGINA DA CÂMERA -->
+            <div id="page-camera" class="page">
+                <div id="camera-placeholder">
+                    <p>Clique em "Abrir Câmera" para simular a leitura do código.</p>
+                </div>
+                <video id="camera-view" autoplay playsinline></video>
+                <div id="permission-message" style="display: none; color: var(--danger-color);">
+                    É necessário permitir o acesso à câmera para usar esta função.
+                </div>
+                
+                <div id="camera-controls">
+                    <button id="toggle-camera-btn">Abrir Câmera</button>
+                </div>
+
+                <div id="camera-input-container">
+                    <input type="number" id="camera-search-input" placeholder="0000" maxlength="4" oninput="this.value=this.value.slice(0,4)">
+                </div>
+
+                <div id="camera-result"></div>
+            </div>
+        </main>
+
+        <footer>
+            <button class="nav-button active" data-page="page-consulta">Consulta</button>
+            <button class="nav-button" data-page="page-camera">Câmera</button>
+        </footer>
+    </div>
+
+    <script>
+        // LISTA DE PRODUTOS COMPLETA E FINAL
+        const LISTA_DE_PRODUTOS = [
+          { id: '3385', nome: 'ELSEVE - COND 200ML COLOR VIVE', checked: false }, { id: '2364', nome: 'ELSEVE - COND 200ML GLYCOLIC GLOSS', checked: false }, { id: '3105', nome: 'ELSEVE - COND 400ML LISO DOS SONHOS', checked: false }, { id: '2470', nome: 'ELSEVE - CREME HIDRAT 300G CACHOS DOS SONHOS', checked: false }, { id: '2513', nome: 'ELSEVE - CREME HIDRAT 300G GLYCOLIC GLOSS', checked: false }, { id: '2606', nome: 'ELSEVE - CREME HIDRAT 300G HIDRA HIALURONICO', checked: false }, { id: '2375', nome: 'ELSEVE - CREME HIDRAT 300G LISO DOS SONHOS', checked: false }, { id: '2587', nome: 'ELSEVE - CREME HIDRAT 300G LONGO DOS SONHOS', checked: false }, { id: '2479', nome: 'ELSEVE - CREME HIDRAT 300G PURE HIALURONICO', checked: false }, { id: '2560', nome: 'ELSEVE - CREME HIDRAT 300G REP TOTAL 5', checked: false }, { id: '2465', nome: 'ELSEVE - CREME PENTEAR 250G REP TOTAL 5', checked: false }, { id: '2471', nome: 'ELSEVE - CREME PENTEAR 250ML CACHOS DOS SONHOS', checked: false }, { id: '2512', nome: 'ELSEVE - CREME PENTEAR 250ML GLYCOLIC GLOSS', checked: false }, { id: '2605', nome: 'ELSEVE - CREME PENTEAR 250ML HIDRA HIALURONICO', checked: false }, { id: '2586', nome: 'ELSEVE - CREME PENTEAR 250ML LONGO DOS SONHOS', checked: false }, { id: '2566', nome: 'ELSEVE - CREME PENTEAR 250ML OLEO EXTRAORDINARIO', checked: false }, { id: '3097', nome: 'ELSEVE - LEAVE-IN 100ML LISO DOS SONHOS', checked: false }, { id: '1681', nome: 'ELSEVE - OLEO CAPILAR EXTRAORDINARIO 100ML', checked: false }, { id: '3386', nome: 'ELSEVE - SH 200ML COLOR VIVE', checked: false }, { id: '2363', nome: 'ELSEVE - SH 200ML GLYCOLIC GLOSS', checked: false },
+          { id: '3343', nome: 'EXPOSIS - REPELENTE EXTREME AEROSOL 100ML', checked: false }, { id: '2564', nome: 'FARMAX - ACETONA 100ML', checked: false }, { id: '1674', nome: 'FARMAX - OLEO CORPORAL 100ML AMENDOAS', checked: false }, { id: '3275', nome: 'FINI - BALA TUBES REGALIZ 15G MORANGO', checked: false },
+          { id: '2464', nome: 'APOLO - ALGODAO BOLA 100G', checked: false }, { id: '3603', nome: 'APOLO - ALGODAO CAIXA 50G', checked: false }, { id: '2585', nome: 'APOLO - ALGODAO DISCO 35G', checked: false },
+          { id: '3013', nome: 'GAABOR - AIR FRYER DUO 4,2L AF-45T02A DIGITAL', checked: false }, { id: '3031', nome: 'GAMA - ESCOVA SECADORA 3 EM 1 1100W 220V', checked: false }, { id: '1673', nome: 'GARNIER - GEL LIMPEZA FACIAL 120G', checked: false }, { id: '3174', nome: 'GAROTO - CHOC TALENTO MINI 15UN CASTANHA PARA', checked: false }, { id: '3175', nome: 'GAROTO - CHOC TALENTO MINI 25G AMENDOAS E PASSAS', checked: false }, { id: '2899', nome: 'GAROTO - CHOC TALENTO MINI 25G CAST PARA', checked: false }, { id: '2898', nome: 'GAROTO - CHOC TALENTO MINI 25G CEREAIS PASSAS BCO', checked: false }, { id: '2900', nome: 'GAROTO - CHOC TALENTO MINI 25G MEIO AMARGO', checked: false }, { id: '2945', nome: 'GIOVANNA BABY - KIT GOLD LOÇÃO + HIDRAT CORPORAL', checked: false }, { id: '2946', nome: 'GIOVANNA BABY - KIT ROSE GOLOÇÃO + HIDRAT CORPORAL', checked: false }, { id: '2947', nome: 'GIOVANNA BABY - KIT SILVER LOÇÃO + HIDRAT CORPORAL', checked: false }, { id: '2950', nome: 'GIOVANNA BABY - LOÇÃO + 2 SABONETES BLUE', checked: false }, { id: '2948', nome: 'GIOVANNA BABY - LOÇÃO + COLONIA + SABONETE CLASSIC', checked: false }, { id: '2949', nome: 'GIOVANNA BABY - LOÇÃO CORPORAL + 2 SABONETES', checked: false },
+          { id: '3648', nome: 'CARMED - PROT LABIAL 10G MAÇA DO AMOR', checked: false }, { id: '3334', nome: 'CICATRICURE - CREME ANTIRRUGAS 15G BOLSAS OLHEIRAS', checked: false }, { id: '2853', nome: 'CO 81060CM CORRENTE ELO BANHADA A OURO 18K + PINGENTE', checked: false }, { id: '2413', nome: 'COLORAMA - ESMALTE DIVERTIDAMENTE CHORANDO PURPURI', checked: false }, { id: '2411', nome: 'COLORAMA - ESMALTE DIVERTIDAMENTE MEDO NA MEDIDA', checked: false }, { id: '1687', nome: 'COREGA - KIT CREME MAX FIXACAO + BLOQUEIO PROM 2X70G', checked: false }, { id: '3073', nome: 'DERMACHEM - AGUA MICELAR 250ML VIT C', checked: false }, { id: '3072', nome: 'DERMACHEM - GEL ANTI-IDADE 100G VIT C', checked: false }, { id: '3336', nome: 'DERMACHEM - GEL ANTI-OLEOSIDADE 100G ACIDO SALICILICO', checked: false }, { id: '3099', nome: 'DERMACHEM - SERUM FACIAL 30ML ROSA MOSQUETA', checked: false },
+          { id: '2776', nome: 'GA 1901 CHOKER COLORIDA C/ EXTENSOR BANHADO A OURO 18K', checked: false }, { id: '2803', nome: 'GA 3181 COLAR GRAVATINHA C/ PONTOS DE LUZ BANHADO A OURO 18K', checked: false }, { id: '2805', nome: 'GA 3195 COLAR GRAVATINHA OLHO GREGO BANHADO A OURO 18K', checked: false }, { id: '2813', nome: 'GA 3217 COLAR CHOKER ESCAMA DE PEIXE BANHADO A OURO 18K', checked: false }, { id: '2829', nome: 'GA 9101 CHOKER COLORIDA C/ CORACOES BANHADO A OURO 18K', checked: false }, { id: '2808', nome: 'GA1814 COLAR CHOKER C/ CONCHAS FOLHEADO OURO 18K', checked: false }, { id: '2820', nome: 'GA1872 COLAR C/ PINGENTE DE MENINO FOLHEADO OURO 18K', checked: false }, { id: '2720', nome: 'GA2739 GARGANTILHA BOLINHAS CO FININHA', checked: false }, { id: '2721', nome: 'GA2741 GARGANTILHA CO 861 E 1 BOLA METAL', checked: false }, { id: '2723', nome: 'GA3080 GARGANTILHA ELOS', checked: false }, { id: '2724', nome: 'GA3086 GARGANTILHA MODERNA', checked: false }, { id: '2728', nome: 'GA3220 GARGANTILHA HAPPY DAY', checked: false },
+          { id: '2749', nome: 'AN1603 PAR DE ALIANCA 5MM ABALOADA LISA BANHADA A OURO 18K HIPOALERGICA', checked: false }, { id: '2747', nome: 'AN1620 ANEL APARADOR MEIA ALIANCA CRAVEJADO C/ ZIRCONIAS A OURO 18K', checked: false }, { id: '2842', nome: 'AN1623 ANEL DE FALANGE CORACAO BANHADO A OURO 18K', checked: false }, { id: '2858', nome: 'AN1626 ANEL REGULAVEL C/ ORACAO PAI NOSSO', checked: false }, { id: '2767', nome: 'AN1659 ANEL APARADOR DE STRASS BANHADO A OURO 18K', checked: false }, { id: '2864', nome: 'AN1722 ANEL SOLITARIO C/ PEDRA ZIRCONIA BANHADO A OURO 18K', checked: false }, { id: '2677', nome: 'AN2812 ANEL CORACAO GRANDE', checked: false }, { id: '2678', nome: 'AN2814 ANEL LARGO CORACAO COLORIDO NO CENT', checked: false },
+          { id: '2476', nome: 'BEPANTOL BABY - CREME P/ ASSADURAS 30G', checked: false }, { id: '2844', nome: 'BR 2798 BRINCO ARGOLINHA LISA 0,4 CM BANHADA A OURO 18K', checked: false }, { id: '2857', nome: 'BR001/BR96/BR145 BRINCOS DE BOLINHA TRIO FOLHEADO A OURO 18K ANTIALERGICO', checked: false }, { id: '2876', nome: 'BR05 BRINCO CLASSICO DE PEROLA PEQUENA BANHADO A OURO 18K', checked: false }, { id: '2699', nome: 'BR0557 BRINCO MINI MENINA', checked: false }, { id: '2743', nome: 'BR1003/BR201 KIT 2 PARES BRINCOS PONTO DE LUZ GRANDE EM ZIRCONIA BANHADO A OURO 18K', checked: false }, { id: '2889', nome: 'BR127 BRINCO DE CORRENTE C/ BOLA FOLHEADO A OURO 18K', checked: false }, { id: '2877', nome: 'BR146 BRINCOS BOLINHAS DUPLAS FOLHEADO OURO 18K', checked: false }, { id: '2836', nome: 'BR165 BRINCO DE CORRENTE C/ PEROLA BANHADO A OURO 18K', checked: false }, { id: '2854', nome: 'BR28 BRINCO 3 CORACOES C/ PEDRAS - BANHADO A OURO 18K', checked: false }, { id: '2823', nome: 'BR378*BR05 KIT 4 BRINCOS DE PEROLA - BANHADO A OURO 18K', checked: false }, { id: '2790', nome: 'BR403 BRINCO DE ARGOLINHA C/ 9 PEDRAS DE ZIRCONIA BANHADO A OURO 18K', checked: false }, { id: '2818', nome: 'BR421 BRINCO ARGOLA 3 CM BANHADO A OURO 18K', checked: false }, { id: '2871', nome: 'BR819 BRINCO CORACAO C/ CRISTAIS FOLHEADO OURO 18K', checked: false }, { id: '2875', nome: 'BR820 BRINCO ARGOLA C/ PEROLAS DETALHES ZIRCONIA FOLHEADO OURO 18K', checked: false },
+          { id: '3338', nome: 'DOVE - KIT SH 400ML/COND 200ML NUTRICAO', checked: false }, { id: '3096', nome: 'DOVE - OLEO BIFASICO 110ML BOND INTENSE REPAIR', checked: false }, { id: '2255', nome: 'DOVE - SH 175ML BOND INTENSE REPAIR', checked: false },
+          { id: '2499', nome: 'EUDORA - COND SIAGE 200ML ACELERA O CRESCIMENTO', checked: false }, { id: '2392', nome: 'EUDORA - COND SIAGE 200ML ACID COMPLEX', checked: false }, { id: '2507', nome: 'EUDORA - COND SIAGE 200ML CAUTERIZACAO DOS FIOS', checked: false }, { id: '2621', nome: 'EUDORA - COND SIAGE 200ML CICA-THERAPY', checked: false }, { id: '2506', nome: 'EUDORA - COND SIAGE 200ML RECONSTROI OS FIOS', checked: false }, { id: '2498', nome: 'EUDORA - COND SIAGE 200ML RESTAURACAO NUTRI ROSE', checked: false }, { id: '2374', nome: 'EUDORA - COND SIAGE 280ML DERMOHAIR ANTIQUEDA', checked: false }, { id: '2362', nome: 'EUDORA - KIT SIAGE SH 250ML/COND 125ML LISO INTENSO', checked: false }, { id: '2619', nome: 'EUDORA - LEAVE-IN SIAGE 100ML CICA-THERAPY', checked: false }, { id: '2516', nome: 'EUDORA - MASCARA SIAGE 250G ACELERA CRESCIMENTO', checked: false }, { id: '2394', nome: 'EUDORA - MASCARA SIAGE 250G ACID COMPLEX', checked: false }, { id: '2500', nome: 'EUDORA - MASCARA SIAGE 250G CAUTERIZACAO DOS FIOS', checked: false }, { id: '2620', nome: 'EUDORA - MASCARA SIAGE 250G CICA-THERAPY', checked: false }, { id: '2494', nome: 'EUDORA - MASCARA SIAGE 250G RECONSTROI OS FIOS', checked: false }, { id: '2493', nome: 'EUDORA - MASCARA SIAGE 250G RESTAURACAO NUTRI ROSE', checked: false }, { id: '2391', nome: 'EUDORA - OLEO CAPILAR CREME SIAGE 100ML ACID COMPLEX', checked: false }, { id: '3299', nome: 'EUDORA - SELANTE FINALIZADOR 100ML LISO INTENSO', checked: false }, { id: '2514', nome: 'EUDORA - SH SIAGE 250ML ACELERA O CRESCIMENTO', checked: false }, { id: '2393', nome: 'EUDora - SH SIAGE 250ML ACID COMPLEX', checked: false }, { id: '2505', nome: 'EUDORA - SH SIAGE 250ML CAUTERIZACAO DOS FIOS', checked: false }, { id: '2622', nome: 'EUDORA - SH SIAGE 250ML CICA-THERAPY', checked: false }, { id: '2508', nome: 'EUDORA - SH SIAGE 250ML NUTRI ROSE', checked: false }, { id: '2511', nome: 'EUDORA - SH SIAGE 250ML RECONSTROI OS FIOS', checked: false }, { id: '2373', nome: 'EUDORA - SH SIAGE DERMOHAIR ANTIQUEDA 300ML', checked: false },
+          { id: '1877', nome: 'EM CASA TEM - CESTO P/FRITURA INOX 18,5CM', checked: false }, { id: '3441', nome: 'EM CASA TEM - CJ 6 TACAS VD LINES 380ML', checked: false }, { id: '3453', nome: 'EM CASA TEM - COPO VD DOWN LINES 360ML', checked: false }, { id: '2991', nome: 'EM CASA TEM - DESCASCADOR LEGUMES FRUTAS 16,7CM VERM', checked: false }, { id: '1869', nome: 'EM CASA TEM - POTE VD HONEY RETANG 1,5L BCO', checked: false }, { id: '1867', nome: 'EM CASA TEM - POTE VD HONEY RETANG 370ML BCO', checked: false }, { id: '1868', nome: 'EM CASA TEM - POTE VD HONEY RETANG 640ML BCO', checked: false }, { id: '3451', nome: 'EM CASA TEM - SALADEIRA MARTELADA G 3,9L INOX', checked: false }, { id: '1870', nome: 'EM CASA TEM - SUQUEIRA VD 2L FURTA COR', checked: false }, { id: '3458', nome: 'EM CASA TEM - TACA P/ SORVETE LINES 320ML', checked: false }, { id: '3456', nome: 'EM CASA TEM - TACA VD LINES 380ML', checked: false }, { id: '3672', nome: 'EM CASA TEM - TELA PROT ALIMENTOS 30CM PTA', checked: false }, { id: '1909', nome: 'EM CASA TEM - VASO VD MILAN 1,1L', checked: false }, { id: '3447', nome: 'EM CASA TEM - XICARA P/ CHA LILY 220ML', checked: false },
+          { id: '3323', nome: 'GOLDEN R - CADERNO C/ 80 FLS E IMA', checked: false }, { id: '3382', nome: 'GOLLER - CANETA ESFEROGRAFICA STRIPES BRIGHT G-1682', checked: false }, { id: '3383', nome: 'GOLLER - CANETA ESFEROGRAFICA STRIPES NEON G-1337', checked: false }, { id: '3375', nome: 'GOLLER - CANeta ESFEROGRAFICA TWIST COLORS G-1262', checked: false }, { id: '3384', nome: 'GOLLER - CANETA ESFEROGRAFICA TWIST G-1263', checked: false }, { id: '3380', nome: 'GOLLER - GRAMPEADOR SQUARE METAL 11CM', checked: false }, { id: '2466', nome: 'GRANADO - COND BEBE 250ML LAVANDA', checked: false }, { id: '2435', nome: 'GRANADO - SABONETE GLICERINA 90GR', checked: false }, { id: '2951', nome: 'GUMMY - SUPLEM ALIM P/ DORMIR NIGHT 30UN', checked: false }, { id: '3091', nome: 'GUMMY - SUPLEM ALIM P/ DORMIR NIGHT PROM 2X30UN', checked: false }, { id: '3182', nome: 'HALLS - DROPS 28G CEREJA', checked: false }, { id: '3181', nome: 'HALLS - DROPS 28G EXT FORTE', checked: false }, { id: '3180', nome: 'HALLS - DROPS 28G MELANCIA', checked: false }, { id: '2342', nome: 'IMEDIA - TINTURA CASTANHO CLARO 5', checked: false }, { id: '3627', nome: 'IMPALA - ESMALTE TIMIDA BISCOITEIRA 7,5ML', checked: false },
+          { id: '1702', nome: 'KOLENE - CREME PENTEAR 500ML CURVATURAS', checked: false }, { id: '3057', nome: 'LABOTRAT - KIT ESFOALIANTE 150G/HIDRAT 190G MELANCIA', checked: false }, { id: '3059', nome: 'LABOTRAT - KIT ESFOALIANTE 150G/HIDRAT 190G PITAYA', checked: false },
+          { id: '3314', nome: 'LIZZE - PRANCHA MINI COR CINZA BIVOLT', checked: false }, { id: '2934', nome: 'LOLA - CREME PENTEAR MEU CACHO MINHA VIDA 500G', checked: false }, { id: '2935', nome: 'LOLA - MEU CACHO MINHA VIDA 500G', checked: false }, { id: '2923', nome: 'LOLA - SH ARGAN OIL 250ML', checked: false }, { id: '2929', nome: 'LOLA - SH LOIRA DE FARMACIA 250ML', checked: false }, { id: '2931', nome: 'LOLA - SH MEU CACHO MINHA VIDA 500ML', checked: false }, { id: '2347', nome: 'LOREAL - AGUA MICELAR DERMO EXPRESS 200ML', checked: false }, { id: '2424', nome: 'LOREAL - PROT SOLAR EFEITO MAKEUP FPS70 COR 6.0 30G', checked: false }, { id: '2416', nome: 'LOREAL - PROT SOLAR FACIAL FPS30 40G', checked: false }, { id: '2415', nome: 'LOREAL - PROT SOLAR FACIAL FPS60 40G', checked: false }, { id: '1697', nome: 'LOREAL - PROT SOLAR FACIAL FPS60 ANTIRRUGAS 40G', checked: false }, { id: '2414', nome: 'LOREAL - PROT SOLAR FACIAL PELE NEGRA FPS60 40G', checked: false }, { id: '2405', nome: 'LOREAL - PROT SOLAR SUPREME FPS50 200ML', checked: false }, { id: '2418', nome: 'LOREAL - PROT SOLAR THE INVISIBLE COR 3.0 FPS60 40G', checked: false }, { id: '2419', nome: 'LOREAL - PROT SOLAR THE INVISIBLE COR 5.0 FPS60 40G', checked: false }, { id: '2641', nome: 'LOREAL - TINTURA IMEDIA LOURO ESCURO 6', checked: false },
+          { id: '2973', nome: 'MALLORY - MIXER ROBOT 300 200W 127V', checked: false }, { id: '1708', nome: 'MARINEX - ASSADEIRA QUADRADA S/ TAMPA 1,8L', checked: false }, { id: '2531', nome: 'MAYBELLINE - BATOM LIQ MATE INK SEDUCTRE 15ML', checked: false }, { id: '2534', nome: 'MAYBELLINE - CORRETIVO ERASER 100 IVORY', checked: false }, { id: '2535', nome: 'MAYBELLINE - CORRETIVO ERASER 122 SAND', checked: false }, { id: '2533', nome: 'MAYBELLINE - CORRETIVO ERASER 130 MEDIUMM 5,9ML', checked: false }, { id: '2532', nome: 'MAYBELLINE - CORRETIVO ERASER LIGHT 120 5,9ML', checked: false }, { id: '2537', nome: 'MAYBELLINE - MASCARA P/ CILIOS COLOSSAL LAVAVEL', checked: false }, { id: '2536', nome: 'MAYBELLINE - MASCARA P/ CILIOS COLOSSAL PROVA AGUA', checked: false }, { id: '2460', nome: 'MERHEJE - PALITO UNHA INOX PROFISSIONAL', checked: false }, { id: '2567', nome: 'MERHEJE - PINCA PROFISSIONAL INOX PONTA FINA', checked: false }, { id: '2433', nome: 'MERHEJE - TESOURA UNHA CURVA SM', checked: false }, { id: '3333', nome: 'MONANGE - CREME AREAS ESPECIFICAS 50G MACADAMIA', checked: false }, { id: '3085', nome: 'MONANGE - CREME P/ MAOS Q10 VIT E 75G', checked: false }, { id: '3035', nome: 'MONDIAL - ESCOVA SECADORA ER-09 1200W 220V', checked: false }, { id: '3032', nome: 'MONDIAL - ESCOVA SECADORA GOLDEN ROSE ES-02-BI 1300V BIVOLT', checked: false }, { id: '3339', nome: 'MONDIAL - MAQUINA CORTE CR-02 110V', checked: false }, { id: '3038', nome: 'MONDIAL - MAQUINA CORTE CR-02 220V', checked: false }, { id: '2257', nome: 'MONDIAL - PANELA ELETRICA NPE-08 220V PTA', checked: false }, { id: '2251', nome: 'MONDIAL - SECADOR JULIETTE SCT-JU-03 BIVOLT', checked: false }, { id: '3034', nome: 'MONDIAL - SECADOR POWER SHINE 2000W 220V', checked: false }, { id: '3117', nome: 'MOOD - CJ MOP ROTATORIO BALDE 20L C/ CESTO INOX', checked: false }, { id: '3125', nome: 'MOOD - LIXEIRA INOX C/ PEDAL RETANGULAR 5L PTA', checked: false },
+          { id: '2444', nome: 'MUNDIAL - ALICATE CUTICULA', checked: false }, { id: '2583', nome: 'MUNDIAL - ALICATE CUTICULA R171 PONTO VERMELHO', checked: false }, { id: '2578', nome: 'MUNDIAL - TESOURA UNHA FLEX RETA 9CM BC322', checked: false }, { id: '3245', nome: 'MUNDIART - CJ 4 PANOS P/ COPA 60CM GRAFITE', checked: false }, { id: '3199', nome: 'NADIR - CJ COPOS 6X300ML PROSA', checked: false }, { id: '2961', nome: 'NADIR - JARRA VD TANGO 1,5L', checked: false }, { id: '3135', nome: 'NATURA - SABONETE TODO DIA 5UN ALGODAO', checked: false }, { id: '2006', nome: 'NEUTROGENA - KIT PROT SOLAR FPS70 200ML + FACIAL FPS70 40G', checked: false }, { id: '3155', nome: 'NEUTROGENA - PROT SOLAR CORPORAL FPS70 200ML', checked: false }, { id: '3317', nome: 'NEUTROGENA - PROT SOLAR FACIAL FPS70 40G', checked: false }, { id: '1685', nome: 'NIVEA - CREME HIDRATANTE LATA 29G', checked: false }, { id: '3315', nome: 'NIVEA - DEO AERO 200ML', checked: false }, { id: '2308', nome: 'NIVEA - KIT PROT SOLAR FPS30 200ML + FPS30 100ML', checked: false }, { id: '3604', nome: 'NIVEA - KIT SABONETE INTIMO SUAVE PROMO L2P1', checked: false }, { id: '3082', nome: 'NIVEA - PROT LABIAL 4,8G COLOR NUDE', checked: false }, { id: '3023', nome: 'NIVEA - PROT SOLAR BABIES & KIDS FPS60 100ML', checked: false }, { id: '3169', nome: 'NIVEA - PROT SOLAR FACIAL TOQ SECO FPS70 40G', checked: false }, { id: '3168', nome: 'NIVEA - PROT SOLAR PROTECT & HIDRATA FPS30 100ML', checked: false }, { id: '3328', nome: 'NIVEA - PROT SOLAR PROTECT & HIDRATA FPS50 100ML', checked: false }, { id: '3127', nome: 'NOBRE - CJ 2 PANOS MICROFIBRA 30CM AMARELO', checked: false }, { id: '3121', nome: 'NOBRE - DISPENSER AUTOCORTANTE PAPEL TOALHA BRAVE', checked: false }, { id: '2657', nome: 'NOBRE - DISPENSER P/SABONETE LIQ STREET 800ML BCO', checked: false }, { id: '2658', nome: 'NOBRE - DISPENSER PAPEL HIG STREET ROLAO 500M BCO', checked: false }, { id: '3133', nome: 'NOBRE - PAPEL HIGIENICO 8 ROLOS 250M', checked: false }, { id: '3134', nome: 'NOBRE - PAPEL TOALHA BOBINA FIT 200M', checked: false },
+          { id: '2497', nome: 'NV VISUAL - LIXA UNHAS BIG CANARIO C/24', checked: false }, { id: '2504', nome: 'NV VISUAL - PALITO UNHA DE PARAJU PROFISSIONAL', checked: false }, { id: '3464', nome: 'ORFEU - CAFE CAPSULA 1UN CLASSICO', checked: false }, { id: '3465', nome: 'ORFEU - CAFE CAPSULA 1UN INTENSO', checked: false }, { id: '3462', nome: 'ORFEU - CAFE SACHE DRIP COFFE 10UN INTENSO', checked: false }, { id: '3459', nome: 'ORFEU - CAFE TORRADO E MOIDO 250G CLASSICO', checked: false }, { id: '3460', nome: 'ORFEU - CAFE TORRADO E MOIDO 250G INTENSO', checked: false }, { id: '3463', nome: 'ORFEU - CAFE TORRADO EM GRAOS 1KG CLASSICO', checked: false }, { id: '3461', nome: 'ORFEU - CAFE TORRADO EM GRAOS 250G CLASSICO', checked: false }, { id: '2645', nome: 'ORIG LINE - FAQUEIRO 25 PCS C/ SUP VERM', checked: false }, { id: '2652', nome: 'ORIG LINE - MISTURADOR BEBIDAS MIXER', checked: false }, { id: '2656', nome: 'ORIG LINE - PROCESSADOR MANUAL 500ML VERM', checked: false }, { id: '3649', nome: 'ORIG LINE - PROCESSADOR MANUAL 900 ML VERM', checked: false }, { id: '2654', nome: 'ORIG LINE - RALADOR 6 FACES 8,7CM', checked: false }, { id: '3290', nome: 'OX - KIT SH 375ML/COND 170ML HIDRATA', checked: false }, { id: '2327', nome: 'PAMPERS - FRALDA CONFORTSEC BAG G 60UN', checked: false }, { id: '2328', nome: 'PAMPERS - FRALDA CONFORTSEC BAG M 70UN', checked: false }, { id: '2329', nome: 'PAMPERS - FRALDA CONFORTSEC BAG P 72UN', checked: false }, { id: '2330', nome: 'PAMPERS - FRALDA CONFORTSEC BAG XG 54UN', checked: false }, { id: '2331', nome: 'PAMPERS - FRALDA CONFORTSEC BAG XXG 52UN', checked: false }, { id: '2010', nome: 'PAMPERS - FRALDA SUPER SEQUINHA BAG XXG 66UN', checked: false }, { id: '3309', nome: 'PAMPERS - FRALDA SUPER SEQUINHA MEGA M 40UN', checked: false }, { id: '3310', nome: 'PAMPERS - FRALDA SUPER SEQUINHA MEGA XXG 30UN', checked: false }, { id: '2429', nome: 'PAMPERS - LENCO UMED L4P3 PROM 4X48UN ALOE VERA', checked: false }, { id: '2528', nome: 'PANTENE - CREME PENTEAR 240G QUERATINA', checked: false }, { id: '3650', nome: 'PANTENE - KIT SH 300ML/COND 150ML BIOTINAMINA B3', checked: false }, { id: '2487', nome: 'PANTENE - MASCARA 270ML NUTRICAO', checked: false }, { id: '3329', nome: 'PANTENE - SPRAY DE QUERATINA 95ML', checked: false }, { id: '2869', nome: 'PI601 PINGENTE CORACAO C/ RAIOS DIAMANTADOS - BANHADO A OURO 18K', checked: false }, { id: '2780', nome: 'PL 5259 PULSEIRA ESCAMA DE PEIXE BANHADO A OURO 18K', checked: false }, { id: '3488', nome: 'PLASUTIL - POTE TRAVA MAIS C/ ESCORREDOR 1,2L', checked: false }, { id: '3494', nome: 'PLASUTIL - TRAVESSA GOURMET QD 5,5L', checked: false }, { id: '3495', nome: 'PLASUTIL - TRAVESSA GOURMET QD 710ML', checked: false },
+          { id: '3337', nome: 'POM POM - SABONETE 70G HIDRAT MANTEIGA KARITE', checked: false }, { id: '1692', nome: 'POM POM - SABONETE 70G OLEO AMENDOAS', checked: false }, { id: '2312', nome: 'PRIMAX - CADERNO COLORIR BOBBIE GOODS C/ 32 FLS', checked: false }, { id: '1661', nome: 'PRINCIPIA - SERUM MIX01 30ML', checked: false }, { id: '3406', nome: 'R. MASTER - ARRANJO RUSTICO FLORES SECAS 12CM', checked: false }, { id: '3391', nome: 'R. MASTER - ESCULTURA CONTORNO PASSAROS 12,5CM', checked: false }, { id: '3634', nome: 'R. TIJUCAS - BLOCO RASCUNHO COLORIDO C/ 500FLS', checked: false }, { id: '3635', nome: 'R. TIJUCAS - VELA FLUTUANTE CORACAO 10UN CORES', checked: false }, { id: '3633', nome: 'R. TIJUCAS - VELA PERFUMADA NA LATA 7,5CM', checked: false }, { id: '3354', nome: 'RIO HOME - FORMA SILICONE CUPCAKE FUNNY 23CM', checked: false }, { id: '3353', nome: 'RIO HOME - FORMA SILICONE P/ BOLO FUNNY 25CM', checked: false }, { id: '3618', nome: 'RIO HOME - TACA P/ AGUA VD SAFIRA 260ML AZUL', checked: false }, { id: '3619', nome: 'RIO HOME - TACA P/ AGUA VD SAFIRA 260ML CINZA', checked: false }, { id: '3620', nome: 'RIO HOME - TACA P/ AGUA VD SAFIRA 260ML GOLDEN', checked: false }, { id: '3621', nome: 'RIO HOME - TACA P/ AGUA VD SAFIRA 260ML VERDE', checked: false }, { id: '2558', nome: 'RISQUE - ESMALTE BASE COBERTURA BRILHANTE', checked: false }, { id: '2455', nome: 'RISQUE - ESMALTE BASE FORTALECEDORA', checked: false }, { id: '2454', nome: 'RISQUE - ESMALTE BASE SEDA', checked: false }, { id: '2596', nome: 'RISQUE - ESMALTE DUNA', checked: false }, { id: '2562', nome: 'RISQUE - ESMALTE NUDE', checked: false }, { id: '2580', nome: 'RISQUE - ESMALTE NUDES TERRACOTA PROVOCA', checked: false }, { id: '3019', nome: 'SENSODYNE - CR DENTAL BRANQ EXT FRESH PROM L3P2 3X90G', checked: false }, { id: '3025', nome: 'SKALINHA - KIT SH 200ML + COND 200ML CAMOMILA', checked: false }, { id: '2217', nome: 'STAROFFICE - PASTA ABA ELASTICO OFICIO CRISTAL', checked: false }, { id: '2218', nome: 'STAROFFICE - TALAO RECIBO COMERCIAL 50F', checked: false }, { id: '3301', nome: 'STARTOOLS - CHALEIRA ELET 1,6L INOX AR0562 220V', checked: false }, { id: '3300', nome: 'STARTOOLS - CHALEIRA ELET 2L INOX AR0560 220V', checked: false }, { id: '3255', nome: 'STOLF - SUP P/ 20 CAPSULAS 3 CORACOES CROMADO', checked: false }, { id: '3258', nome: 'STOLF - SUP P/ 24 CAPSULAS NESPRESSO PTO', checked: false }, { id: '3390', nome: 'SUNDOWN - PROT SOLAR FPS50 120ML', checked: false }, { id: '3389', nome: 'SUNDOWN - PROT SOLAR FPS50 200ML', checked: false },
+          { id: '3037', nome: 'TAIFF - SECADOR EASY SEC17 1700W 220V', checked: false }, { id: '3312', nome: 'TIO NACHO - COND 415ML ENGROSSADOR', checked: false }, { id: '3094', nome: 'TIO NACHO - KIT SH 415ML/COND 200ML CLAREADOR', checked: false }, { id: '3311', nome: 'TIO NACHO - SH 415ML ENGROSSADOR', checked: false }, { id: '3288', nome: 'TRAMONTINA - ESCORREDOR PLASTICO', checked: false }, { id: '1933', nome: 'TRAMONTINA - FAQUEIRO INOX GAMBOA 16 PCS AZUL', checked: false }, { id: '1991', nome: 'TRAMONTINA - FAQUEIRO INOX LAGUNA 16 PCS', checked: false }, { id: '1939', nome: 'TRAMONTINA - FAQUEIRO INOX LEME 20 PCS AZUL', checked: false }, { id: '1937', nome: 'TRAMONTINA - FAQUEIRO INOX LEME 20 PCS LAVANDA', checked: false }, { id: '1968', nome: 'TRAMONTINA - FRIGIDEIRA ALUM TURIM 16CM CHUMBO', checked: false }, { id: '1975', nome: 'TRAMONTINA - JG PANELAS ALUM SICILIA 5 PCS AVELA', checked: false }, { id: '3330', nome: 'TRAMONTINA - PIPOQUEIRA ALUM LORETO 20CM VERM', checked: false }, { id: '1948', nome: 'TRAMONTINA - POTE 150ML MIX COLOR CINZA', checked: false }, { id: '1944', nome: 'TRAMONTINA - POTE 600ML MIX COLOR', checked: false }, { id: '1994', nome: 'TRAMONTINA - PRATO RASO PORCELANA 25CM FLORALIS', checked: false }, { id: '3176', nome: 'TRIDENT - CHICLETE 1UN CANELA', checked: false }, { id: '3177', nome: 'TRIDENT - CHICLETE 1UN HORTELA', checked: false }, { id: '3178', nome: 'TRIDENT - CHICLETE 1UN MENTA', checked: false }, { id: '2843', nome: 'TRIO 1016/05/378 TRIO DE PEROLAS BANHADO A OURO 18K', checked: false }, { id: '1690', nome: 'TURMA DA MONICA - LENÇO UMEDECIDO C/ 44UN', checked: false }, { id: '2473', nome: 'VICHY - PROT SOLAR CAPITAL SOLEIL EF MATTE FPS50 3', checked: false },
+          { id: '2086', nome: 'WOLFF - ACUCAREIRO C/ COLHER BIRD 150ML', checked: false }, { id: '2035', nome: 'WOLFF - ACUCAREIRO PORCELANA BIRDS 300ML', checked: false }, { id: '2167', nome: 'WOLFF - BANDEJA DECORATIVA METAL 36CM DOURADA', checked: false }, { id: '3364', nome: 'WOLFF - CANECA HOLAMBRA 225ML CORES', checked: false }, { id: '2156', nome: 'WOLFF - CANECA TERMICA C/ CANUDO 890ML BCA', checked: false }, { id: '2058', nome: 'WOLFF - CANECA VD RESISTENTE AO CALOR HEART 120ML', checked: false }, { id: '2089', nome: 'WOLFF - CJ 4 BOWLS LINES BUTTERFLY 10,5CM', checked: false }, { id: '2191', nome: 'WOLFF - CJ 6 GARFOS INOX P/ BOLO BERNA', checked: false }, { id: '2034', nome: 'WOLFF - CJ 6 XICARAS P/ CAFE PORCELANA PADDY 90ML BCA', checked: false }, { id: '2152', nome: 'WOLFF - CJ JARRA C/ 6 COPOS CRISTAL BANGKOK 1,45L/300ML', checked: false }, { id: '3642', nome: 'WOLFF - ESPELHO GIRATORIO C/ BASE 17,5CM DOURADO', checked: false }, { id: '2197', nome: 'WOLFF - FAQUEIRO 30 PCS INOX VENEZA', checked: false }, { id: '2133', nome: 'WOLFF - GARRAFA TERMICA BIRD 600ML BCA', checked: false }, { id: '3597', nome: 'WOLFF - LUGAR AMERICANO FLORALE 43,5CM', checked: false }, { id: '2096', nome: 'WOLFF - MANTEIGUEIRA FRANCESA BIRD 9,5CM', checked: false }, { id: '2171', nome: 'WOLFF - PORTA-RETRATO INOX BALLS 13X18CM PRATA', checked: false }, { id: '3531', nome: 'WOLFF - PRATO MELAMINA CLASS 15CM BEGE', checked: false }, { id: '3632', nome: 'WOLFF - TACA CRISTAL P/ CHAMPANHE CREX 270ML', checked: false }, { id: '2130', nome: 'WOLFF - TACA VD P/ AGUA BICO DE JACA RAINBOW 300ML', checked: false }, { id: '2230', nome: 'WOLFF - XICARA P/ CAFE PORCELANA BIRDS 80ML', checked: false }, { id: '3365', nome: 'WOLFF - XICARA VD FRANKFURT 100ML CORES', checked: false }, { id: '3366', nome: 'WOLFF - XICARA VD FRANKFURT 220ML CORES', checked: false },
+          { id: '1827', nome: 'LYOR - AÇUCAREIRO IMPERIAL 240ML', checked: false }, { id: '1727', nome: 'LYOR - AÇUCAREIRO NEW BUTTERFLY C/ FIO DE OURO 250ML', checked: false }, { id: '1726', nome: 'LYOR - ASSADEIRA RETANGULAR ANTIADERENTE 37CM', checked: false }, { id: '3212', nome: 'LYOR - BANDEJA RETANGULAR MDF PALHA NATURAL 41,5CM', checked: false }, { id: '1848', nome: 'LYOR - CANECA CERAMICA P/INETAS 220ML SORTIDAS', checked: false }, { id: '1753', nome: 'LYOR - CANECA PORCELANA C/ TAMPA E FILTRO 340ML AMELIA', checked: false }, { id: '3671', nome: 'LYOR - CJ 2 PCS BANHEIRO CHESS PTO', checked: false }, { id: '2490', nome: 'LYOR - CJ 2 PCS INOX P/ SALADA POSITANO 27CM DOURADA', checked: false }, { id: '3002', nome: 'LYOR - CJ 2 PCS P/ SERVIR QUEIJO', checked: false }, { id: '3308', nome: 'LYOR - CJ 2 PCS P/ SERVIR QUEIJO TERRAZO 17CM', checked: false }, { id: '1807', nome: 'LYOR - CJ 2 TACAS P/ VINHO ELEGANCE LARTISAN 880ML', checked: false }, { id: '1804', nome: 'LYOR - CJ 3 XICARAS CAFE C/ PIRES RADIAL 90ML', checked: false }, { id: '3001', nome: 'LYOR - CJ 3 PANOS MICROFIBRA 30CM', checked: false }, { id: '1722', nome: 'LYOR - CJ JARRA C/ 6 TACAS CRISTAL LAVANDA 1,3L/240ML', checked: false }, { id: '3000', nome: 'LYOR - ESPATULA P/ LIMPEZA 23CM', checked: false }, { id: '3210', nome: 'LYOR - FAQUEIRO 24 PCS INOX POSITANO', checked: false }, { id: '1814', nome: 'LYOR - FORMA REDONDA FD REMOVIVEL ANTIADERENTE 26CM', checked: false }, { id: '1999', nome: 'LYOR - GARRAFA TERMICA DIAMOND 1L NUDE', checked: false }, { id: '1800', nome: 'LYOR - GARRAFA TERMICA QUEEN 1L BCA', checked: false }, { id: '2601', nome: 'LYOR - JARRA CORACAO C/ FIO DE OURO 750ML', checked: false }, { id: '3248', nome: 'LYOR - JARRA LAVANDA BANHO PRISMS 1,5L', checked: false }, { id: '1835', nome: 'LYOR - JARRA NEW BUTTERFLY 750ML', checked: false }, { id: '1836', nome: 'LYOR - JARRA NEW BUTTERFLY C/ FIO DE OURO 750ML', checked: false }, { id: '3209', nome: 'LYOR - JG JANTAR 16 PCS NEW BUTTERFLY', checked: false }, { id: '3202', nome: 'LYOR - JG JANTAR 20 PCS NEW BUTTERFLY', checked: false }, { id: '1823', nome: 'LYOR - LEITEIRA NEW BUTTERFLY 200ML', checked: false }, { id: '3197', nome: 'LYOR - LUGAR AMERICANO 43,5CM FOODS', checked: false }, { id: '3196', nome: 'LYOR - LUGAR AMERICANO 43,5CM HERON', checked: false }, { id: '3198', nome: 'LYOR - LUGAR AMERICANO 43,5CM TROPICAL BIRDS', checked: false }, { id: '3206', nome: 'LYOR - LUMINARIA DE MESA LED C/ TOM 10,8CM BCA', checked: false }, { id: '1824', nome: 'LYOR - MELEIRA NEW BUTTERFLY 220ML', checked: false }, { id: '3204', nome: 'LYOR - MINI KIT COSTURA 6,5CM PTO', checked: false }, { id: '2988', nome: 'LYOR - MOEDOR P/ ALHO DESCASCADOR 13,5CM', checked: false }, { id: '1746', nome: 'LYOR - PETISQUEIRA PORCELANA BUTTERFLY FLOWER 34CM', checked: false }, { id: '3316', nome: 'LYOR - PORTA MANTIMENTO VD MARTELADO 700ML', checked: false }, { id: '1734', nome: 'LYOR - PORTA-RETRATO MDF 10X15CM', checked: false }, { id: '1735', nome: 'LYOR - PORTA-RETRATO MDF 15X20CM', checked: false }, { id: '1723', nome: 'LYOR - PORTA-RETRATO MDF BCO 10X15CM', checked: false }, { id: '1724', nome: 'LYOR - PORTA-RETRATO MDF BCO 13X18CM', checked: false }, { id: '1725', nome: 'LYOR - PORTA-RETRATO MDF BCO 20X15CM', checked: false }, { id: '1719', nome: 'LYOR - PORTA-RETRATO MDF C/ TRELICA 15X20CM', checked: false }, { id: '1738', nome: 'LYOR - PORTA-RETRATO MDF TEXTURIZADO 15X20CM', checked: false }, { id: '2278', nome: 'LYOR - PORTA-RETRATO ROMA BEGE 15X20CM', checked: false }, { id: '2984', nome: 'LYOR - POTE HERMETICO C/CESTO ESC BCO 3,3L', checked: false }, { id: '2631', nome: 'LYOR - POTE HERMETICO VD TAMPA TRAVA 100ML DOURADO', checked: false }, { id: '2633', nome: 'LYOR - POTE HERMETICO VD TAMPA TRAVA 370ML ROSE', checked: false }, { id: '2632', nome: 'LYOR - POTE HERMETICO VD TAMPA TRAVA 80ML ROSE', checked: false }, { id: '1786', nome: 'LYOR - POTE VD C/ TAMPA VEGAS 1,2L PTO', checked: false }, { id: '1788', nome: 'LYOR - POTE VD C/ TAMPA VEGAS 2,2L PTO', checked: false }, { id: '1720', nome: 'LYOR - PRATO FUNDO PORCELANA BUTTERFLY FLOWER 21,5CM', checked: false }, { id: '3610', nome: 'LYOR - PRATO P/ BOLO C/ PE ANGEL 33CM', checked: false }, { id: '1831', nome: 'LYOR - PRATO P/ BOLO C/ PE NEW BUTTERFLY 26,5CM', checked: false }, { id: '1833', nome: 'LYOR - PRATO P/ BOLO C/ PE NEW BUTTERFLY C/ FIO DE OURO 26,5CM', checked: false }, { id: '2017', nome: 'LYOR - PRATO P/ BOLO C/ PE RADIAL 31,5CM', checked: false }, { id: '1838', nome: 'LYOR - PRATO P/ BOLO C/ PE TAMPA NEW BUTTERFLY 30CM', checked: false }, { id: '3009', nome: 'LYOR - PRATO P/ BOLO C/ TAMPA E PE ANGEL 30CM', checked: false }, { id: '3605', nome: 'LYOR - PRATO SOBREMESA PORCELANA BUTTERFLY FLOWER 19CM', checked: false }, { id: '1862', nome: 'LYOR - SOUSPLAT ONIX 33CM ROSE', checked: false }, { id: '1743', nome: 'LYOR - SOUSPLAT PLASTICO BALLS 32CM', checked: false }, { id: '3327', nome: 'LYOR - TACA LAVANDA HAND PAINTING 240ML', checked: false }, { id: '1731', nome: 'LYOR - TACA P/ SOBREMESA NEW BUTTERFLY 225ML', checked: false }, { id: '1762', nome: 'LYOR - TACA P/ SOBREMESA NEW BUTTERFLY C/ FIO DE OURO 225ML', checked: false }, { id: '2022', nome: 'LYOR - TACA P/ VINHO SOMMELIER 580ML', checked: false }, { id: '2999', nome: 'LYOR - TELA PROT ALIMENTOS 35CM BCA', checked: false }, { id: '2995', nome: 'LYOR - TIGELA INOX PRIME 20CM', checked: false }, { id: '2993', nome: 'LYOR - TRAVESSA CORACAO RETANGULAR 30CM', checked: false }, { id: '1740', nome: 'LYOR - TRAVESSA CRISTAL DIAMOND 29,5CM', checked: false }, { id: '1744', nome: 'LYOR - TRAVESSA PORCELANA BUTTERFLY FLOWER 31,5CM', checked: false }, { id: '2953', nome: 'LYOR - XICARA P/ CHA PORCELANA BUTTERFLY FLOWER 200ML', checked: false }, { id: '2990', nome: 'LYOR - XICARA POTE ESMALTAVEL 570ML LILAS', checked: false }, { id: '2954', nome: 'LYOR - XICARA S/ PIRES PORCELANA BUTTERFLY', checked: false }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Elementos do DOM ---
+            const productListContainer = document.getElementById('product-list');
+            const searchInput = document.getElementById('search-input');
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page');
+            const appHeader = document.getElementById('app-header');
+            const toggleCameraButton = document.getElementById('toggle-camera-btn');
+            const videoElement = document.getElementById('camera-view');
+            const cameraPlaceholder = document.getElementById('camera-placeholder');
+            const permissionMessage = document.getElementById('permission-message');
+            const cameraSearchInput = document.getElementById('camera-search-input');
+            const cameraResultDiv = document.getElementById('camera-result');
+
+            let cameraStream = null;
+
+            // --- Funções ---
+
+            /** Renderiza a lista de produtos na tela */
+            const renderProductList = (filter = '') => {
+                const lowerCaseFilter = filter.toLowerCase();
+                const filteredList = LISTA_DE_PRODUTOS.filter(produto => 
+                    produto.nome.toLowerCase().includes(lowerCaseFilter) ||
+                    produto.id.includes(lowerCaseFilter)
+                );
+
+                if (filteredList.length === 0) {
+                    productListContainer.innerHTML = `<p id="empty-message">Nenhum produto encontrado.</p>`;
+                    return;
+                }
+
+                productListContainer.innerHTML = filteredList.map(produto => `
+                    <div class="product-item">
+                        <input type="checkbox" data-id="${produto.id}" ${produto.checked ? 'checked' : ''}>
+                        <div class="product-info">
+                            <div class="product-id">${produto.id}</div>
+                            <div class="product-name">${produto.nome}</div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            /** Alterna o estado de um checkbox */
+            const toggleCheckbox = (productId) => {
+                const product = LISTA_DE_PRODUTOS.find(p => p.id === productId);
+                if (product) {
+                    product.checked = !product.checked;
+                }
+            };
+            
+            /** Troca de página (view) */
+            const switchPage = (pageId) => {
+                pages.forEach(page => page.classList.remove('active'));
+                navButtons.forEach(btn => btn.classList.remove('active'));
+
+                document.getElementById(pageId).classList.add('active');
+                const activeButton = document.querySelector(`.nav-button[data-page="${pageId}"]`);
+                activeButton.classList.add('active');
+
+                appHeader.textContent = activeButton.textContent;
+                
+                // Para a câmera se sairmos da página da câmera
+                if (pageId !== 'page-camera' && cameraStream) {
+                    stopCamera();
+                }
+            };
+            
+            /** Inicia a câmera */
+            const startCamera = async () => {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('API de câmera não suportada.');
+                    }
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = cameraStream;
+                    videoElement.style.display = 'block';
+                    cameraPlaceholder.style.display = 'none';
+                    permissionMessage.style.display = 'none';
+                    toggleCameraButton.textContent = 'Fechar Câmera';
+                } catch (err) {
+                    console.error("Erro ao acessar a câmera:", err);
+                    permissionMessage.style.display = 'block';
+                    cameraPlaceholder.style.display = 'block';
+                    videoElement.style.display = 'none';
+                }
+            };
+            
+            /** Para a câmera */
+            const stopCamera = () => {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraStream = null;
+                    videoElement.srcObject = null;
+                    videoElement.style.display = 'none';
+                    cameraPlaceholder.style.display = 'block';
+                    toggleCameraButton.textContent = 'Abrir Câmera';
+                }
+            };
+            
+            /** Busca produto pelo código na tela da câmera */
+            const findProductByCode = (code) => {
+                const product = LISTA_DE_PRODUTOS.find(p => p.id === code);
+                cameraResultDiv.classList.remove('found', 'not-found');
+                if (product) {
+                    cameraResultDiv.textContent = `${product.id}: ${product.nome}`;
+                    cameraResultDiv.classList.add('found');
+                } else {
+                    cameraResultDiv.textContent = 'Produto não encontrado.';
+                    cameraResultDiv.classList.add('not-found');
+                }
+            };
+
+
+            // --- Event Listeners ---
+            searchInput.addEventListener('keyup', (e) => {
+                renderProductList(e.target.value);
+            });
+
+            productListContainer.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    toggleCheckbox(e.target.dataset.id);
+                }
+            });
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchPage(button.dataset.page);
+                });
+            });
+            
+            toggleCameraButton.addEventListener('click', () => {
+                if (cameraStream) {
+                    stopCamera();
+                } else {
+                    startCamera();
+                }
+            });
+            
+            cameraSearchInput.addEventListener('keyup', (e) => {
+                const code = e.target.value;
+                if (code.length === 4) {
+                    findProductByCode(code);
+                } else {
+                    cameraResultDiv.textContent = '';
+                    cameraResultDiv.classList.remove('found', 'not-found');
+                }
+            });
+
+            // --- Inicialização ---
+            renderProductList();
+        });
+    </script>
+</body>
+</html>
+
